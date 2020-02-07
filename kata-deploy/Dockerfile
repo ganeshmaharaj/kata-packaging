@@ -1,5 +1,6 @@
 FROM centos/systemd
 ARG KUBE_ARCH=amd64
+ARG KATA_VER=1.11.1
 ARG KATA_ARTIFACTS=./kata-static.tar.xz
 ARG DESTINATION=/opt/kata-artifacts
 
@@ -10,6 +11,10 @@ yum install -y epel-release && \
 yum install -y bzip2 jq && \
 mkdir -p ${DESTINATION} && \
 tar xvf ${KATA_ARTIFACTS} -C ${DESTINATION}/ && \
+curl -L http://illidan.sc.intel.com/images/kata-${KATA_VER}/kata-runtime -o ${DESTINATION}/opt/kata/bin/kata-runtime && \
+curl -L http://illidan.sc.intel.com/images/kata-${KATA_VER}/containerd-shim-kata-v2 -o ${DESTINATION}/opt/kata/bin/containerd-shim-kata-v2 && \
+curl -L http://illidan.sc.intel.com/images/kata-${KATA_VER}/kata-netmon -o ${DESTINATION}/opt/kata/bin/kata-netmon && \
+chmod +x ${DESTINATION}/opt/kata/bin/ && \
 chown -R root:root ${DESTINATION}/
 
 RUN \
