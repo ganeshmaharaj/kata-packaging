@@ -7,6 +7,7 @@
 set -o errexit
 set -o pipefail
 set -o nounset
+set -o xtrace
 
 crio_conf_file="/etc/crio/crio.conf"
 crio_conf_file_backup="${crio_conf_file}.bak"
@@ -52,6 +53,11 @@ function install_artifacts() {
 	echo "copying kata artifacts onto host"
 	cp -a /opt/kata-artifacts/opt/kata/* /opt/kata/
 	chmod +x /opt/kata/bin/*
+}
+
+function configure_kata_default_configs() {
+  sed -i "s/\(default_vcpus\).*/\1\ = $(($(lscpu | grep 'CPU(s):' | head -1 | awk '{print $2}') * 80/100))/g" `grep -rl default_vcpus $(find /opt/kata/ -name "*.toml")`
+  sed -i "s/\(default_memory\).*/\1\ = $(($(grep MemTotal /proc/meminfo | awk '{print $2}') * 80/102400))/g" `grep -rl default_memory $(find /opt/kata/ -name "*.toml")`
 }
 
 function configure_cri_runtime() {
@@ -309,6 +315,7 @@ function main() {
 		install)
 
 			install_artifacts
+      configure_kata_default_configs
 			configure_cri_runtime "$runtime"
 			kubectl label node "$NODE_NAME" --overwrite katacontainers.io/kata-runtime=true
 			;;
