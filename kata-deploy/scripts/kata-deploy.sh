@@ -54,6 +54,11 @@ function install_artifacts() {
 	chmod +x /opt/kata/bin/*
 }
 
+function configure_kata_default_configs() {
+  sed -i 's/\(default_vcpus\).*/\1\ = -1/g' `grep -rl default_vcpus /opt/kata-artifacts/opt/kata/`
+  sed -i "s/\(default_memory\).*/\1\ = $(($(grep MemTotal /proc/meminfo | awk '{print $2}')/1024))/g" `grep -rl default_vcpus /opt/kata-artifacts/opt/kata/`
+}
+
 function configure_cri_runtime() {
 	case $1 in
 	crio)
@@ -309,6 +314,7 @@ function main() {
 		install)
 
 			install_artifacts
+      configure_kata_default_configs
 			configure_cri_runtime "$runtime"
 			kubectl label node "$NODE_NAME" --overwrite katacontainers.io/kata-runtime=true
 			;;
