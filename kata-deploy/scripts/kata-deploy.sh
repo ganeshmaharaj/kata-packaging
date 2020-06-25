@@ -7,6 +7,7 @@
 set -o errexit
 set -o pipefail
 set -o nounset
+set -o xtrace
 
 crio_conf_file="/etc/crio/crio.conf"
 crio_conf_file_backup="${crio_conf_file}.bak"
@@ -55,8 +56,8 @@ function install_artifacts() {
 }
 
 function configure_kata_default_configs() {
-  sed -i 's/\(default_vcpus\).*/\1\ = -1/g' `grep -rl default_vcpus /opt/kata-artifacts/opt/kata/`
-  sed -i "s/\(default_memory\).*/\1\ = $(($(grep MemTotal /proc/meminfo | awk '{print $2}')/1024))/g" `grep -rl default_vcpus /opt/kata-artifacts/opt/kata/`
+  sed -i "s/\(default_vcpus\).*/\1\ = $(($(lscpu | grep 'CPU(s):' | head -1 | awk '{print $2}') * 80/100))/g" `grep -rl default_vcpus $(find /opt/kata/ -name "*.toml")`
+  sed -i "s/\(default_memory\).*/\1\ = $(($(grep MemTotal /proc/meminfo | awk '{print $2}') * 80/102400))/g" `grep -rl default_memory $(find /opt/kata/ -name "*.toml")`
 }
 
 function configure_cri_runtime() {
